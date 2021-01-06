@@ -1,0 +1,4 @@
+name = "MHSampler"
+uuid = "bd726389-b880-41da-add3-09aa2db054e6"
+authors = ["efmanu <manuedavakandam@gmail.com>"]
+version = "0.1.0"
