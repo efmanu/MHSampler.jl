@@ -1,6 +1,7 @@
 module MHSampler
 
 using Distributions
+using Random
 
 """
 	mh(η)
@@ -13,29 +14,29 @@ To generate samples
 - `η`	: Acceptance level
 - `itr` : Number iterations to generate samples
 """
-function mh(propPDF, priorPDF; η = 0.65, itr = 1000)
+function mh(model, priorPDF, likelihood_dist, data; proposalPDF=priorPDF, η = 0.65, itr = 1000)
 	states = Array{Float64}(undef,0)
 	burn_in = Int(itr*0.2)
-	current = 0.1
-	for i in 2:itr
-		append!(states, current)
-		movement = rand(propPDF)
-		
-		acceptance = min(logpdf(priorPDF,movement)/logpdf(priorPDF,current),1)
-		
-		if random_coin(acceptance)
-            current = movement
-        end
+	prev_params = 1.0
+	for i=1:itr
+		append!(states,prev_params)
+		params = rand(proposalPDF)
+		lg_curr = log_joint(model,priorPDF, params, likelihood_dist, data)	 
+		lg_prev = log_joint(model,priorPDF, prev_params, likelihood_dist, data)	 
+
+		logα = lg_curr - lg_prev
+		if(-Random.randexp() < logα)
+			prev_params = params
+		end
 	end
 	return states[burn_in:itr-1]
 end
-
-function random_coin(p)
-    unif = rand(Uniform(0,1))
-    if unif >= p
-        return false
-    else
-        return true
-    end
+function log_joint(model,priorPDF, params, likelihood_dist, data)	 
+	logpdf_prior = pdf(priorPDF, params)
+	pred = model(params)
+	likelihoodPDF = likelihood_dist(pred, 1.0)
+	logpdf_likelihood = logpdf(likelihoodPDF, data)
+	return (logpdf_likelihood + logpdf_prior)
 end
+
 end # module
