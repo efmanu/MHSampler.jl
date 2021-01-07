@@ -3,18 +3,33 @@ module MHSampler
 using Distributions
 using Random
 
+###########
+# Exports #
+###########
+export mh
+
 """
-	mh(η)
-To generate samples
+	mh(model, priorPDF, likelihood_dist, data; proposalPDF=priorPDF, itr = 1000)
+This package aims to generate samples using The Metropolis–Hastings algorithm
 
 # Inputs
-- `propPDF`: Proposal distribution
-- `priorPDF`: Prior distribution
+- model 			: Function to generate likelihood value, eg: model(x) = 3*x+4
+- priorPDF			: Probability density function of prior distribution, eg: Normal(0.0,1.0)
+- likelihood_dist	: Distribution of likelihood value, eg: Normal
+- data				: Data
+
 # Keyword Arguments
-- `η`	: Acceptance level
-- `itr` : Number iterations to generate samples
+- proposalPDF		: Probability density function to generate proposals, default will be silira to prior PDF. Eg: Normal(0.0,1.0)
+- itr 				: Number of samples to generate. Default is 1000.
+
+# Output
+- states			: Posterior samples
+
+#Example
+
+states = mh(model, priorPDF, likelihood_dist, data)
 """
-function mh(model, priorPDF, likelihood_dist, data; proposalPDF=priorPDF, η = 0.65, itr = 1000)
+function mh(model, priorPDF, likelihood_dist, data; proposalPDF=priorPDF, itr = 1000)
 	states = Array{Float64}(undef,0)
 	burn_in = Int(itr*0.2)
 	prev_params = 1.0
