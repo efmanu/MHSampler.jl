@@ -10,7 +10,7 @@ using DataFrames
 export mh
 
 """
-	mh(model, priorPDF, likelihood_dist, data; proposalPDF=priorPDF, itr = 1000)
+	mh(model, priorPDF, likelihood_dist, data, param_dims; proposalPDF=priorPDF, itr = 1000)
 This package aims to generate samples using The Metropolis–Hastings algorithm
 
 # Inputs
@@ -18,6 +18,7 @@ This package aims to generate samples using The Metropolis–Hastings algorithm
 - priorPDF			: Probability density function of prior distribution, eg: Normal(0.0,1.0)
 - likelihood_dist	: Distribution of likelihood value, eg: Normal
 - data				: Data
+- param_dims		: Dimension of paramters
 
 # Keyword Arguments
 - proposalPDF		: Probability density function to generate proposals, default will be silira to prior PDF. Eg: Normal(0.0,1.0)
@@ -37,7 +38,7 @@ function mh(model, priorPDF, likelihood_dist, data, param_dims; proposalPDF=prio
 	#initial value
 	prev_params = ones(param_dims)
 	for i=2:itr
-		states[!,Symbol(i-1)] = rand(param_dims)
+		states[!,Symbol(i-1)] = prev_params
 		params = rand(proposalPDF, param_dims)
 		lg_curr = log_joint(model,priorPDF, params, likelihood_dist, data)	 
 		lg_prev = log_joint(model,priorPDF, prev_params, likelihood_dist, data)	 
