@@ -2,6 +2,7 @@ module MHSampler
 
 using Distributions
 using Random
+using DataFrames
 
 ###########
 # Exports #
@@ -29,14 +30,15 @@ This package aims to generate samples using The Metropolis–Hastings algorithm
 
 states = mh(model, priorPDF, likelihood_dist, data)
 """
-function mh(model, priorPDF, likelihood_dist, data; proposalPDF=priorPDF, itr = 1000)
-	states = Array{Float64}(undef,0)
+function mh(model, priorPDF, likelihood_dist, data, param_dims; proposalPDF=priorPDF, itr = 1000)
+	states = DataFrame();
+	states.var = map(x->"var[$x]", 1:param_dims)
 	burn_in = Int(itr*0.2)
 	#initial value
-	prev_params = 1.0
+	prev_params = ones(param_dims)
 	for i=2:itr
-		append!(states,prev_params)
-		params = rand(proposalPDF)
+		states[!,Symbol(i-1)] = rand(param_dims)
+		params = rand(proposalPDF, param_dims)
 		lg_curr = log_joint(model,priorPDF, params, likelihood_dist, data)	 
 		lg_prev = log_joint(model,priorPDF, prev_params, likelihood_dist, data)	 
 
@@ -47,18 +49,22 @@ function mh(model, priorPDF, likelihood_dist, data; proposalPDF=priorPDF, itr = 
 			prev_params = params
 		end
 	end
-	return states[burn_in:itr-1]
+	for i  in 1:burn_in
+		select!(states,Not(Symbol(i)))
+	end
+	return states
 end
 """
 	log_joint(model,priorPDF, params, likelihood_dist, data)	
 Function identify log of joint distribution
 """
-function log_joint(model,priorPDF, params, likelihood_dist, data)	 
-	logpdf_prior = pdf(priorPDF, params)
+function log_joint(model,priorPDF, params, likelihood_dist, data)
+	logpdf_prior = map(x->pdf(priorPDF,x), params)
 	pred = model(params)
-	likelihoodPDF = likelihood_dist(pred, 1.0)
-	logpdf_likelihood = logpdf(likelihoodPDF, data)
-	return (logpdf_likelihood + logpdf_prior)
+	likelihoodPDF = map(x->likelihood_dist(x,1.0), pred)
+	logpdf_likelihood = logpdf.(likelihoodPDF, data)
+	return (sum(logpdf_likelihood) + sum(logpdf_prior))
 end
+
 
 end # module

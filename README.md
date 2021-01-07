@@ -26,7 +26,7 @@ using Plots
 
 #model to generate likelihood values
 function model(x)
-	return 5*x+6
+	return sum(x)
 end;
 
 #PDF of prior distribution
@@ -34,10 +34,11 @@ priorPDF = Uniform(0.0,10.0);
 
 likelihood_dist = Normal;
 
+param_dims = 5;
 #data generation
-data = model(4.0);
+data = model(1:param_dims);
 
 #sampling
-states = mh(model, priorPDF, likelihood_dist, data, itr =10000);
+states = mh(model, priorPDF, likelihood_dist, data, param_dims, itr =10000);
 histogram(states, bins=100)
 ```
