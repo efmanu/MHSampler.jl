@@ -6,7 +6,7 @@ This package aims to generate samples using The Metropolis–Hastings algorithm
 
 ### Inputs
 
-- model 			: Function to generate likelihood value, eg: model(x) = 3*x+4
+- model 			: Function to generate likelihood value, eg: `model(x) = 3*x+4`
 - priorPDF			: Probability density function of prior distribution, eg: Normal(0.0,1.0)
 - likelihood_dist	: Distribution of likelihood value, eg: Normal
 - data				: Data
@@ -18,7 +18,7 @@ This package aims to generate samples using The Metropolis–Hastings algorithm
 ### Output
 - states			: Posterior samples
 
-###Example
+### Example
 
 ```julia
 using MHSampler
