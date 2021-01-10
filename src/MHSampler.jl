@@ -29,16 +29,17 @@ This package aims to generate samples using The Metropolis–Hastings algorithm
 
 #Example
 
-sing Random
+using Random
 using Distributions
-using DataFrame
+using DataFrames
 using Plots
+using MHSampler
 
 f(x, ps) = ps[1].*x .+ ps[2]
 
 model(x, ps) = Normal.(f(x, ps), 1.0)
 
-input = rand()
+input = rand(5)
 ps = [1,2]
 output = f(input,ps)
 
@@ -47,18 +48,18 @@ length_ps = 2
 prior = Uniform(0.0,10.0)
 proposal = Uniform(0.0,10.0)
 
-itr = 1000
+itr = 10000
 ch = mh(input, output, model, prior, length_ps)
-histogram(Array(ch[1,2:end]))
+histogram(Array(ch[1,2:end]), bins = 50)
 """
 function mh(input, output, model, prior, length_ps; proposal = prior, itr = 1000, burn_in = Int(itr*0.2))
 	states = DataFrame();
-	states.var = map(x->"var[$x]", 1:length_ps)
+	states.var = map(x->"param[$x]", 1:length_ps)
 
 	function logJoint(params)
 		psn = rand(proposal, length_ps)
 		logPrior = sum(logpdf.(prior, psn))
-		logLikelihood = logpdf.(model(input, psn), output)
+		logLikelihood = sum(logpdf.(model(input, psn), output))
 		return logPrior + logLikelihood
 	end
 
