@@ -1,19 +1,17 @@
 # MHSampler
 This package aims to generate samples using The Metropolis–Hastings algorithm
 
-`mh(model, priorPDF, likelihood_dist, data, param_dims; proposalPDF=priorPDF, itr = 1000)`
-
+`mh(input, output, model, prior, length_ps; proposal = prior, itr = 1000, burn_in = Int(itr*0.2))`
 
 ### Inputs
-
-- model 			: Function to generate likelihood value, eg: `model(x) = 3*x+4`
-- priorPDF			: Probability density function of prior distribution, eg: Normal(0.0,1.0)
-- likelihood_dist	: Distribution of likelihood value, eg: Normal
-- data				: Data
-- param_dims		: Dimension of paramters
+- input				: input data
+- output			: output data
+- model 			: Likelihood distribution, eg: model(x, params) = Normal(f(x,params), 1.0)
+- prior				: Prior distribution, eg: Normal(0.0,1.0)
+- length_ps			: Length of parameter
 
 ### Keyword Arguments
-- proposalPDF		: Probability density function to generate proposals, default will be silira to prior PDF. Eg: Normal(0.0,1.0)
+- proposal 			: Proposal distribution, eg: Normal(0.0,1.0)
 - itr 				: Number of samples to generate. Default is 1000.
 
 ### Output
@@ -22,26 +20,25 @@ This package aims to generate samples using The Metropolis–Hastings algorithm
 ### Example
 
 ```julia
-using MHSampler
+using Random
+using Distributions
+using DataFrame
 using Plots
 
-#model to generate likelihood values
-function model(x)
-	return x.*4 .+3
-end;
+f(x, ps) = ps[1].*x .+ ps[2]
 
-#PDF of prior distribution
-priorPDF = Uniform(0.0,10.0);
+model(x, ps) = Normal.(f(x, ps), 1.0)
 
-likelihood_dist = Normal;
+input = rand()
+ps = [1,2]
+output = f(input,ps)
 
-param_dims = 1;
-#data generation 
+length_ps = 2
 
-test_params = rand([1.0,2.0,3.0],param_dims)
-data = model(test_params);
+prior = Uniform(0.0,10.0)
+proposal = Uniform(0.0,10.0)
 
-#sampling
-states = mh(model, priorPDF, likelihood_dist, data, param_dims, itr =10000);
-histogram(Array(states[1,2:end]), bins=100)
+itr = 1000
+ch = mh(input, output, model, prior, length_ps)
+histogram(Array(ch[1,2:end]))
 ```

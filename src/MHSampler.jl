@@ -14,14 +14,14 @@ export mh
 This package aims to generate samples using The Metropolis–Hastings algorithm
 
 # Inputs
-- model 			: Function to generate likelihood value, eg: model(x) = 3*x+4
-- priorPDF			: Probability density function of prior distribution, eg: Normal(0.0,1.0)
-- likelihood_dist	: Distribution of likelihood value, eg: Normal
-- data				: Data
-- param_dims		: Dimension of paramters
+- input				: input data
+- output			: output data
+- model 			: Likelihood distribution, eg: model(x, params) = Normal(f(x,params), 1.0)
+- prior				: Prior distribution, eg: Normal(0.0,1.0)
+- length_ps			: Length of parameter
 
 # Keyword Arguments
-- proposalPDF		: Probability density function to generate proposals, default will be silira to prior PDF. Eg: Normal(0.0,1.0)
+- proposal 			: Proposal distribution, eg: Normal(0.0,1.0)
 - itr 				: Number of samples to generate. Default is 1000.
 
 # Output
@@ -29,42 +29,56 @@ This package aims to generate samples using The Metropolis–Hastings algorithm
 
 #Example
 
-states = mh(model, priorPDF, likelihood_dist, data)
+sing Random
+using Distributions
+using DataFrame
+using Plots
+
+f(x, ps) = ps[1].*x .+ ps[2]
+
+model(x, ps) = Normal.(f(x, ps), 1.0)
+
+input = rand()
+ps = [1,2]
+output = f(input,ps)
+
+length_ps = 2
+
+prior = Uniform(0.0,10.0)
+proposal = Uniform(0.0,10.0)
+
+itr = 1000
+ch = mh(input, output, model, prior, length_ps)
+histogram(Array(ch[1,2:end]))
 """
-function mh(model, priorPDF, likelihood_dist, data, param_dims; proposalPDF=priorPDF, itr = 1000)
+function mh(input, output, model, prior, length_ps; proposal = prior, itr = 1000, burn_in = Int(itr*0.2))
 	states = DataFrame();
-	states.var = map(x->"var[$x]", 1:param_dims)
-	burn_in = Int(itr*0.2)
-	#initial value
-	prev_params = ones(param_dims)
-	for i=2:itr
-		states[!,Symbol(i-1)] = prev_params
-		params = rand(proposalPDF, param_dims)
-		lg_curr = log_joint(model,priorPDF, params, likelihood_dist, data)	 
-		lg_prev = log_joint(model,priorPDF, prev_params, likelihood_dist, data)	 
+	states.var = map(x->"var[$x]", 1:length_ps)
 
-		logα = lg_curr - lg_prev
+	function logJoint(params)
+		psn = rand(proposal, length_ps)
+		logPrior = sum(logpdf.(prior, psn))
+		logLikelihood = logpdf.(model(input, psn), output)
+		return logPrior + logLikelihood
+	end
 
-		#acceptance criteria
-		if(-Random.randexp() < logα)
-			prev_params = params
+	prev_params = rand(proposal, length_ps)
+	logJoint_prev = logJoint(prev_params)
+
+	for i in 2:itr	
+		states[!,Symbol(i-1)] = prev_params	
+		current_params = rand(proposal, length_ps)		
+		logJoint_cur = logJoint(current_params)
+		logα = logJoint_cur - logJoint_prev
+		if (-Random.randexp() < logα)
+			prev_params = current_params
+			logJoint_prev= logJoint_cur
 		end
 	end
-	for i  in 1:burn_in
+	for i in 1:burn_in
 		select!(states,Not(Symbol(i)))
 	end
 	return states
-end
-"""
-	log_joint(model,priorPDF, params, likelihood_dist, data)	
-Function identify log of joint distribution
-"""
-function log_joint(model,priorPDF, params, likelihood_dist, data)
-	logpdf_prior = map(x->pdf(priorPDF,x), params)
-	pred = model(params)
-	likelihoodPDF = map(x->likelihood_dist(x,1.0), pred)
-	logpdf_likelihood = logpdf.(likelihoodPDF, data)
-	return (sum(logpdf_likelihood) + sum(logpdf_prior))
 end
 
 
