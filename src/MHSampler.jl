@@ -4,6 +4,8 @@ using Distributions
 using Random
 using DataFrames
 
+
+
 ###########
 # Exports #
 ###########
@@ -49,7 +51,7 @@ prior = Uniform(0.0,10.0)
 proposal = Uniform(0.0,10.0)
 
 itr = 10000
-ch = mh(input, output, model, prior, length_ps)
+ch = mh(input, output, model, prior, length_ps, itr = itr)
 histogram(Array(ch[1,2:end]), bins = 50)
 """
 function mh(input, output, model, prior, length_ps; proposal = prior, itr = 1000, burn_in = Int(itr*0.2))
@@ -57,9 +59,8 @@ function mh(input, output, model, prior, length_ps; proposal = prior, itr = 1000
 	states.var = map(x->"param[$x]", 1:length_ps)
 
 	function logJoint(params)
-		psn = rand(proposal, length_ps)
-		logPrior = sum(logpdf.(prior, psn))
-		logLikelihood = sum(logpdf.(model(input, psn), output))
+		logPrior = sum(logpdf.(prior, params))
+		logLikelihood = sum(logpdf.(model(input, params), output))
 		return logPrior + logLikelihood
 	end
 
@@ -67,11 +68,11 @@ function mh(input, output, model, prior, length_ps; proposal = prior, itr = 1000
 	logJoint_prev = logJoint(prev_params)
 
 	for i in 2:itr	
-		states[!,Symbol(i-1)] = prev_params	
+		states[!,Symbol(i-1)] = prev_params
 		current_params = rand(proposal, length_ps)		
 		logJoint_cur = logJoint(current_params)
 		logα = logJoint_cur - logJoint_prev
-		if (-Random.randexp() < logα)
+		if (-Random.randexp() < logα)						
 			prev_params = current_params
 			logJoint_prev= logJoint_cur
 		end
