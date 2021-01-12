@@ -66,8 +66,7 @@ histogram(Array(chm[1,2:end]),  title="MH", bins = 50)
 """
 
 function mh(input, output, model, priors, length_ps; proposals = priors, itr = 1000, burn_in = Int(itr*0.2))
-	# states = DataFrame();
-	# states.var = map(x->"param[$x]", 1:length_ps)
+	
 	states = Dict()
 	function logJoint(params)	
 		logPrior= sum(map(logParams, priors, params))
@@ -79,7 +78,6 @@ function mh(input, output, model, priors, length_ps; proposals = priors, itr = 1
 	logJoint_prevs = logJoint(prev_params)
 
 	for i in 2:itr	
-		# states[!,Symbol(i-1)] = prev_params
 		states["itr_$(i-1)"] = prev_params
 		current_params = map(rand, proposals, length_ps)	
 		logJoint_curs = logJoint(current_params)
@@ -106,7 +104,6 @@ function data_formatting(states, length_ps, burn_in, itr)
 	end
 	chain.var = param_names
 	for i in (burn_in+1):itr
-		# bt = i-burn_in
 		chain[!,Symbol((i-burn_in))] = rand(sum(length_ps));
 		for ln in 1:lps
 			for x in 1:length_ps[ln]
