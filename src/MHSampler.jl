@@ -105,12 +105,12 @@ function data_formatting(states, length_ps, burn_in, itr)
 		end
 	end
 	chain.var = param_names
-	for i in burn_in:itr
-		bt = i-burn_in
-		chain[!,Symbol(bt+1)] = rand(sum(length_ps));
+	for i in (burn_in+1):itr
+		# bt = i-burn_in
+		chain[!,Symbol((i-burn_in))] = rand(sum(length_ps));
 		for ln in 1:lps
 			for x in 1:length_ps[ln]
-				chain[(ln-1)+x,bt+2]= states["itr_$(i-1)"][ln][x]
+				chain[(ln-1)+x,(i-burn_in)+1]= states["itr_$(i)"][ln][x]
 			end
 		end
 	end
