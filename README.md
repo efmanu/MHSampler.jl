@@ -22,23 +22,33 @@ This package aims to generate samples using The Metropolis–Hastings algorithm
 ```julia
 using Random
 using Distributions
-using DataFrame
+using DataFrames
 using Plots
+using MHSampler
 
-f(x, ps) = ps[1].*x .+ ps[2]
+fo(x, ps1, ps2) = ps1[1].*x +ps1[2].*(x.^2) .+ ps2
 
-model(x, ps) = Normal.(f(x, ps), 1.0)
 
-input = rand()
-ps = [1,2]
-output = f(input,ps)
 
-length_ps = 2
+input = rand(5)
+ps1= (1.0, 2.0)
+ps2 = 2.0
+ps= (ps1, ps2)
+output = fo(input, ps1, ps2)
+itr = 10000
 
-prior = Uniform(0.0,10.0)
-proposal = Uniform(0.0,10.0)
 
-itr = 1000
-ch = mh(input, output, model, prior, length_ps)
-histogram(Array(ch[1,2:end]))
+proposal_1 = Uniform(0.0,10.0)
+proposal_2 = Uniform(0.0,10.0)
+length_ps = (length(ps1),length(ps2))
+proposals = (proposal_1, proposal_2)
+
+prior_1 = Normal(0.0,2.0)
+prior_2 = Normal(0.0,8.0)
+priors = (prior_1, prior_2)
+
+model(x, ps1, ps2) = Normal.(fo(x, ps1, ps2), 1.0)
+
+chm = mh(input, output, model, priors, length_ps, itr = itr);
+histogram(Array(chm[1,2:end]),  title="MH", bins = 50)
 ```
