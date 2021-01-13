@@ -26,29 +26,31 @@ using DataFrames
 using Plots
 using MHSampler
 
-fo(x, ps1, ps2) = ps1[1].*x +ps1[2].*(x.^2) .+ ps2
+
+fo1(ps1, ps2) = ps1[1].*ps2 .+ ps1[2]
 
 
 
 input = rand(5)
-ps1= (1.0, 2.0)
-ps2 = 2.0
-ps= (ps1, ps2)
-output = fo(input, ps1, ps2)
-itr = 10000
+po1= (1.0, 2.0)
+po2 = 3.0
+ps= (po1, po2)
 
+output = fo1(po1, po2)
+itr = 10000
 
 proposal_1 = Uniform(0.0,10.0)
 proposal_2 = Uniform(0.0,10.0)
-length_ps = (length(ps1),length(ps2))
+length_ps = (length(po1),length(po2))
 proposals = (proposal_1, proposal_2)
 
-prior_1 = Normal(0.0,2.0)
-prior_2 = Normal(0.0,8.0)
+prior_1 = Uniform(0.0,10.0)
+prior_2 = Uniform(0.0,10.0)
 priors = (prior_1, prior_2)
 
-model(x, ps1, ps2) = Normal.(fo(x, ps1, ps2), 1.0)
 
-chm = mh(input, output, model, priors, length_ps, itr = itr);
+model(x, ps1, ps2) = Normal.(fo1(ps1, ps2), 1.0)
+
+chm = mh(model, priors, length_ps, input = input, output=output, itr = itr, burn_in = 1);
 histogram(Array(chm[1,2:end]),  title="MH", bins = 50)
 ```
