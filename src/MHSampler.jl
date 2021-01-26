@@ -58,18 +58,19 @@ proposal_2 = Uniform(0.0,10.0)
 length_ps = (length(po1),length(po2))
 proposals = (proposal_1, proposal_2)
 
-prior_1 = Uniform(0.0,10.0)
-prior_2 = Uniform(0.0,10.0)
+prior_1 = Normal(0.0,10.0)
+prior_2 = Normal(2.0,8.0)
 priors = (prior_1, prior_2)
 
 
 model(x, ps1, ps2) = Normal.(fo1(ps1, ps2), 1.0)
 
-chm = mh(model, priors, length_ps, input = input, output=output, itr = itr, burn_in = 1);
+chm = mh(priors, length_ps, model = model, input = input, output=output, itr = itr, burn_in = 1);
 histogram(Array(chm[1,2:end]),  title="MH", bins = 50)
 """
 
-function mh(model, priors, length_ps;
+function mh(priors, length_ps;
+	model = nothing, 
 	input = Array{Float64}(undef,0), 
 	output = Array{Float64}(undef,0),
 	proposals = priors, itr = 1000, burn_in = Int(itr*0.2)
@@ -78,9 +79,10 @@ function mh(model, priors, length_ps;
 	function logJoint(params)	
 		logPrior= sum(map(logParams, priors, params))
 		logLikelihood = 0.0
-		if(length(output) > 0 )
+		if !(model isa Nothing)
 			logLikelihood = sum(logpdf.(model(input, params...), output))
 		end
+		return logPrior + logLikelihood
 	end
 
 	prev_params = map(rand, proposals, length_ps)
@@ -100,17 +102,6 @@ function mh(model, priors, length_ps;
 	return data_formatting(states, length_ps, burn_in, itr)
 end
 
-function logJP(
-	model,
-	params, priors; input=Array{Float64}(undef,0),
-	output=Array{Float64}(undef,0))	
-	logPrior= sum(map(logParams, priors, params))
-	logLikelihood = 0.0
-	if(length(output) > 0 )
-		logLikelihood = sum(logpdf.(model(input, params...), output))
-	end
-	return logPrior + logLikelihood
-end
 
 logParams(prior, params) = sum(logpdf.(prior, params))
 
@@ -126,9 +117,11 @@ function data_formatting(states, length_ps, burn_in, itr)
 	chain.var = param_names
 	for i in (burn_in+1):itr
 		chain[!,Symbol((i-burn_in))] = rand(sum(length_ps));
-		for ln in 1:lps
+		jk = 0
+		for ln in 1:lps			
 			for x in 1:length_ps[ln]
-				chain[(ln-1)+x,(i-burn_in)+1]= states["itr_$i"][ln][x]
+				jk += 1
+				chain[jk,(i-burn_in)+1]= states["itr_$i"][ln][x]
 			end
 		end
 	end
