@@ -3,11 +3,11 @@ This package aims to generate samples using The Metropolis–Hastings algorithm
 
 ```julia
 	mh(priors, proposals::Function;
-	model = nothing, 
-	input = Array{Float64}(undef,0), 
-	output = Array{Float64}(undef,0),
-	itr = 1000, burn_in = Int(itr*0.2)
-)	
+		model = nothing, 
+		input = Array{Float64}(undef,0), 
+		output = Array{Float64}(undef,0),
+		itr = 1000, burn_in = Int(itr*0.2)
+	)	
 ```
 
 ### Inputs
