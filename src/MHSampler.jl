@@ -47,30 +47,29 @@ P = rand(l_w,M)
 z = rand(M)
 input = rand(l_w)
 output = rand(l_w)
-model(x,ps1) = Normal.((x.*ps1), 5.0)
+model(prm) = Normal.((input.*prm), 5.0)
 
-proposald = tuple(MvNormal(rand(10), 2.0))
-prior = tuple(MvNormal(rand(10), 3.0))
-proposalf() = map(rand, proposald)
+proposald = MvNormal(zeros(l_w), 2.0)
+prior = MvNormal(zeros(l_w), 3.0)
+proposalf() = rand(proposald)
 
-chm = mh(prior, proposalf, model = model, input = input, output = output)
+chm = mh(prior, proposalf, model = model, output = output)
 
 histogram(Array(chm[1,2:end]),  title="MH", bins = 50)
 """
 
 
-function mh(priors, proposals::Function;
+function mh(priors , proposals::Function;
 	model = nothing, 
-	input = nothing, 
 	output = nothing,
 	itr = 1000, burn_in = Int(itr*0.2)
 )	
 	states = Dict()
 	function logJoint(params)	
-		logPrior= sum(map(logpdf, priors, params))
+		logPrior= logpdf(priors, params)
 		logLikelihood = 0.0
 		if !(model isa Nothing)
-			logLikelihood = sum(logpdf.(model(input, params...), output))
+			logLikelihood = sum(logpdf.(model(params), output))
 		end
 		return logPrior + logLikelihood
 	end
@@ -92,16 +91,14 @@ function mh(priors, proposals::Function;
 	return data_formatting(states, burn_in, itr)
 end
 
-function mh(priors, proposals::Tuple{Vararg{Distribution}};
+function mh(priors, proposals::Distribution;
 	model = nothing, 
-	input = nothing, 
 	output = nothing,
 	itr = 1000, burn_in = Int(itr*0.2)
 )
-	proposalf = ()->(return map(rand, proposals))
+	proposalf = ()->(return rand(proposals))
 	return mh(priors, proposalf,
 		model = model, 
-		input = input, 
 		output = output,
 		itr = itr, burn_in = burn_in
 	)	
