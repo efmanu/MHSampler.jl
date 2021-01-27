@@ -108,23 +108,17 @@ function data_formatting(states, burn_in, itr)
 	chain =DataFrame();
 	if(!isempty(states))
 		lps = length(states["itr_1"])
-		all_count = 0
 		param_names =[]
 		for ln in 1:lps
-			for x in 1:length(states["itr_1"][ln])
-				all_count += 1
-				push!(param_names,"param[$ln]_[$x]")
-			end
+			push!(param_names,"param[$ln]")
 		end
 		chain.var = param_names
 		for i in (burn_in+1):itr
-			chain[!,Symbol((i-burn_in))] = rand(all_count);
+			chain[!,Symbol((i-burn_in))] = rand(lps);
 			jk = 0
 			for ln in 1:lps			
-				for x in 1:length(states["itr_1"][ln])
-					jk += 1
-					chain[jk,(i-burn_in)+1]= states["itr_$i"][ln][x]
-				end
+				jk += 1
+				chain[jk,(i-burn_in)+1]= states["itr_$i"][ln]
 			end
 		end
 	end
