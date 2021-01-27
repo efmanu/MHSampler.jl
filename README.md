@@ -4,7 +4,6 @@ This package aims to generate samples using The Metropolis–Hastings algorithm
 ```julia
 	mh(priors, proposals::Function;
 		model = nothing, 
-		input = Array{Float64}(undef,0), 
 		output = Array{Float64}(undef,0),
 		itr = 1000, burn_in = Int(itr*0.2)
 	)	
@@ -15,7 +14,6 @@ This package aims to generate samples using The Metropolis–Hastings algorithm
 - proposals			: proposals is proposal generating function. Eg: proposals() = rand(Normal(0.0,1.0))
 
 ### Keyword Arguments
-- input				: input data
 - output			: output data
 - model 			: Likelihood distribution, eg: model(x, params) = Normal(f(x,params), 1.0)
 - itr 				: Number of samples to generate. Default is 1000.
@@ -41,7 +39,13 @@ P = rand(l_w,M)
 z = rand(M)
 input = rand(l_w)
 output = rand(l_w)
-chm = model(x,ps1, ps2) = Normal.((x.*ps1 .+ ps2), 5.0)
+model(prm) = Normal.((input.*prm), 5.0)
+
+proposald = MvNormal(zeros(l_w), 2.0)
+prior = MvNormal(zeros(l_w), 3.0)
+proposalf() = rand(proposald)
+
+chm = mh(prior, proposalf, model = model, output = output)
 
 histogram(Array(chm[1,2:end]),  title="MH", bins = 50)
 ```

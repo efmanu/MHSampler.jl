@@ -13,8 +13,7 @@ export mh
 
 """
 	mh(priors, proposals::Function;
-	model = nothing, 
-	input = Array{Float64}(undef,0), 
+	model = nothing,  
 	output = Array{Float64}(undef,0),
 	itr = 1000, burn_in = Int(itr*0.2)
 )		
@@ -25,7 +24,7 @@ This package aims to generate samples using The Metropolis–Hastings algorithm
 - proposals			: proposals is proposal generating function. Eg: proposals() = rand(Normal(0.0,1.0))
 
 # Keyword Arguments
-- input				: input data
+
 - output			: output data
 - model 			: Likelihood distribution, eg: model(x, params) = Normal(f(x,params), 1.0)
 - itr 				: Number of samples to generate. Default is 1000.
