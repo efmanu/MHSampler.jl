@@ -47,7 +47,13 @@ P = rand(l_w,M)
 z = rand(M)
 input = rand(l_w)
 output = rand(l_w)
-chm = model(x,ps1, ps2) = Normal.((x.*ps1 .+ ps2), 5.0)
+model(x,ps1) = Normal.((x.*ps1), 5.0)
+
+proposald = tuple(MvNormal(rand(10), 2.0))
+prior = tuple(MvNormal(rand(10), 3.0))
+proposalf() = map(rand, proposald)
+
+chm = mh(prior, proposalf, model = model, input = input, output = output)
 
 histogram(Array(chm[1,2:end]),  title="MH", bins = 50)
 """
