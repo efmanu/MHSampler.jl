@@ -57,13 +57,11 @@ chm = mh(prior, proposalf, model = model, output = output)
 histogram(Array(chm[1,2:end]),  title="MH", bins = 50)
 """
 
-
 function mh(priors , proposals::Function;
 	model = nothing, 
 	output = nothing,
-	itr = 1000, burn_in = Int(itr*0.2)
-)	
-	states = Dict()
+	itr = 1000, burn_in = Int(round(itr*0.2))
+)
 	function logJoint(params)	
 		logPrior= logpdf(priors, params)
 		logLikelihood = 0.0
@@ -72,7 +70,19 @@ function mh(priors , proposals::Function;
 		end
 		return logPrior + logLikelihood
 	end
+	return mhsample(proposals, logJoint;
+		model = model, 
+		output = output,
+		itr = itr, burn_in = burn_in
+	)		
+end
 
+function mhsample(proposals::Function, logJoint::Function;
+	model = nothing, 
+	output = nothing,
+	itr = 1000, burn_in = Int(round(itr*0.2))
+)	
+	states = Dict()
 	prev_params = proposals()
 	logJoint_prevs = logJoint(prev_params)
 	states["itr_1"] = prev_params
@@ -90,10 +100,21 @@ function mh(priors , proposals::Function;
 	return data_formatting(states, burn_in, itr)
 end
 
+function mhsample(proposals::Distribution, logJoint::Function;
+	model = nothing, 
+	output = nothing,
+	itr = 1000, burn_in = Int(round(itr*0.2)))
+	proposalf = ()->(return rand(proposals))
+	return mhsample(proposalf, logJoint;
+		model = model, 
+		output = output,
+		itr = itr, burn_in = burn_in
+	)	
+end
 function mh(priors, proposals::Distribution;
 	model = nothing, 
 	output = nothing,
-	itr = 1000, burn_in = Int(itr*0.2)
+	itr = 1000, burn_in = Int(round(itr*0.2))
 )
 	proposalf = ()->(return rand(proposals))
 	return mh(priors, proposalf,

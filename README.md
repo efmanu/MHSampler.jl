@@ -41,11 +41,11 @@ input = rand(l_w)
 output = rand(l_w)
 model(prm) = Normal.((input.*prm), 5.0)
 
-proposald = MvNormal(zeros(l_w), 2.0)
-prior = MvNormal(zeros(l_w), 3.0)
+proposald = MvNormal(ones(l_w), 3.0)
+prior = MvNormal(ones(l_w), 3.0)
 proposalf() = rand(proposald)
 
-chm = mh(prior, proposalf, model = model, output = output)
+chm = mh(prior, proposalf, model=model, output = output, itr =10_000)
 
 histogram(Array(chm[1,2:end]),  title="MH", bins = 50)
 ```
